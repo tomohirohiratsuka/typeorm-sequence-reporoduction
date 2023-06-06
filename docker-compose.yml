@@ -1,0 +1,48 @@
+version: '3.4'
+services:
+  nest:
+    build: .
+    container_name: typeorm-nest
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - ./:/app
+      - /app/node_modules/
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      - typeorm-app-network
+    healthcheck:
+      test: "curl -f http://localhost:4114/api/health-check && exit 0 || exit 1"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1m
+
+  db:
+    image: postgres:12
+    restart: always
+    container_name: typeorm-db-postgres
+    user: postgres
+    env_file: .env
+    environment:
+      - TZ=Asia/Tokyo
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    healthcheck:
+      test: pg_isready
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - typeorm-app-network
+
+
+volumes:
+  postgres-data:
+
+networks:
+  typeorm-app-network:
